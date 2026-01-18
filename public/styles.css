@@ -1,0 +1,140 @@
+@font-face {
+    font-family: "Vercetti";
+    src: url("/fonts/Vercetti-Regular.ttf") format("truetype");
+}
+body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--background-color);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+main{
+    margin-top: 8vh;
+    color: var(--text-color);
+    max-width: 720px;
+    font-family: Vercetti, sans-serif;
+    display: flex;
+    flex-direction: column;
+}
+main * {
+    margin: 5px;
+}
+h1{
+    color: var(--text-color);
+    font-weight: normal;
+}
+h2{
+    color: var(--text-color);
+    font-weight: normal;
+}
+h3,h4,h5,h6{
+    color: var(--primary-color);
+    font-weight: normal;
+}
+strong{
+    color: var(--tertiary-color);
+}
+a{
+    color: var(--secondary-color);
+}
+em{
+    color: var(--accent-color);
+}
+code{
+    background-color: var(--secondary-color-muted);
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-family: monospace;
+}
+pre{
+    background-color: var(--secondary-color-muted);
+    padding: 8px;
+    border-radius: 4px;
+    overflow-x: auto;
+}
+pre code{
+    background-color: transparent;
+    padding: 0;
+}
+pre code span{
+    padding: 0;
+    margin: 0;
+}
+
+table{
+    border-collapse: collapse;
+    width: 100%;
+}
+
+th, td{
+    padding: 8px;
+    text-align: left;
+}
+th{
+    border-bottom: 1px solid var(--text-color);
+}
+tr:nth-child(even){
+    background-color: var(--secondary-color-muted);
+}
+th{
+    color: var(--primary-color);
+    font-weight: bold;
+}
+ul{
+    padding-left: 20px;
+}
+ol{
+    padding-left: 20px;
+}
+blockquote{
+    border-left: 4px solid var(--tertiary-color);
+    padding-left: 16px;
+    color: var(--text-color);
+    margin: 8px 0;
+}
+.tag{
+    display: inline-block;
+    background-color: var(--primary-color);
+    color: var(--text-color);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+.tag-1{
+    background-color: var(--secondary-color);
+}
+.tag-2{
+    background-color: var(--tertiary-color);
+}
+.tag-3{
+    background-color: var(--accent-color);
+    color: var(--text-color);
+}
+.tag-4{
+    background-color: var(--secondary-color-muted);
+    color: var(--text-color);
+}
+
+:root{
+    --background-color: #dae7f4;
+    --text-color: #000000;
+    --primary-color: #9c72f8;
+    --secondary-color: #9C5080;
+    --tertiary-color: #9b2d08;
+    --accent-color: #f5e93d;
+    --secondary-color-muted: rgba(192, 160, 192, 0.3);
+}
+@media(prefers-color-scheme: dark){
+    :root{
+        --background-color: #090118;
+        --text-color: #dae7f4;
+        --primary-color: #9c72f8;
+        --secondary-color: #9C5080;
+        --tertiary-color: #9b2d08;
+        --accent-color: #f5e93d;
+        --secondary-color-muted: rgba(192, 160, 192, 0.3);
+    }
+}
