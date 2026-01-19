@@ -15,6 +15,10 @@ const rules:Array<rule> = [
         name: "Add Layout",
         description: "Adds the layout frontmatter to the markdown file.",
         apply: (input:string, file_details:file_details)=>{
+            // This means there is already frontmatter present, we don't want to change that too much, however we do want to ensure the layout is set
+            if(input.startsWith("---")){
+                return input.replace("---", `---\nlayout: ./src/layouts/Layout.astro \n`);
+            }
             return `---\nlayout: ./src/layouts/Layout.astro \n---\n\n${input}`;
         }
     },
@@ -27,13 +31,21 @@ const rules:Array<rule> = [
         }
     },
     {
+        name: "Add Component Import after frontmatter",
+        description: "Adds the import statement for the Tag component after frontmatter.",
+        apply: (input:string, file_details:file_details)=>{
+            // Add import statement after frontmatter
+            return input.replace(/(---)(.*?)(---)/s, `$1$2$3\n\nimport Preview from './src/components/Preview.astro'\n`);
+        }
+    },
+    {
         name: "Replace all internal links",
         description: "Replaces all internal links identified by [[link|text]] with [text](./link.md).",
         apply: (input:string, file_details:file_details)=>{
             return input.replace(/\[\[([^\|\]]+)\|?([^\]]*)\]\]/g, (match, p1, p2) => {
                 const link = p1.trim();
                 const text = p2.trim() || link;
-                return `[${text}](${link}.md)`;
+                return `[${text}](${link})`;
             })
         }
     },
@@ -42,9 +54,18 @@ const rules:Array<rule> = [
         description: "Converts all tags identified by #tag to <div class=\"tag\">#tag</div>.",
         apply: (input:string, file_details:file_details)=>{
             return input.replace(/#(\w+)/g, (match, p1) => {
-                // Generate a random number between 1 and 4 for color assignment
-                const num = Math.floor(Math.random() * 4) + 1;
-                return `<div class="tag tag-${num}">#${p1}</div>`;
+                // Check if we have already assigned a class to this tag
+                let assigned_class = null;
+                if(SharedState.tag_class_map.has(p1)){
+                    assigned_class = SharedState.tag_class_map.get(p1);
+                }
+                else{
+                    // Generate a random number between 1 and 4 for color assignment
+                    const num = Math.floor(Math.random() * 4) + 1;
+                    assigned_class = `${num}`;
+                    SharedState.tag_class_map.set(p1, assigned_class);
+                }
+                return `<div class="tag tag-${assigned_class}">#${p1}</div>`;
             })
         }
     }

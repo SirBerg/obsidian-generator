@@ -1,3 +1,6 @@
+---
+import Preview from "../components/Preview.astro";
+---
 <!doctype html>
 <html lang="en">
 	<head>
@@ -7,10 +10,38 @@
 		<meta name="generator" content={Astro.generator} />
 		<title>Astro Basics</title>
         <link rel="stylesheet" href="/styles.css" />
+        <script>
+            // Add mouse hover preview for links
+            document.addEventListener('DOMContentLoaded', () => {
+                const links = document.querySelectorAll('a');
+                const iframe:HTMLIFrameElement = document.getElementById('preview-frame');
+                if(!iframe) return;
+                links.forEach(link => {
+                    link.addEventListener('mouseover', () => {
+                        // Show the preview component
+                        link.style.color = 'rgb(78, 80, 86)';
+                        // Change iframe src
+                        iframe.src = link.href;
+                        iframe.style.display = 'block';
+
+                        // Change iframe position to be near the link
+                        const rect = link.getBoundingClientRect();
+                        iframe.style.position = 'absolute';
+                        iframe.style.top = `${rect.bottom + window.scrollY + 5}px`;
+                        iframe.style.left = `${rect.left + window.scrollX}px`;
+                    });
+                    link.addEventListener('mouseout', () => {
+                        link.style.color = '';
+                        iframe.style.display = 'none';
+                    });
+                })
+            });
+        </script>
 	</head>
 	<body>
         <main>
             <slot />
+            <iframe id="preview-frame" class="preview" />
         </main>
 	</body>
 </html>

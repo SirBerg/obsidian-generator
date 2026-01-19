@@ -138,3 +138,12 @@ blockquote{
         --secondary-color-muted: rgba(192, 160, 192, 0.3);
     }
 }
+.preview{
+    border: 1px solid var(--primary-color);
+    border-radius: 8px;
+    padding: 8px;
+    margin: 8px 0;
+    background-color: var(--secondary-color-muted);
+    display: none;
+    min-width: 500px;
+}
