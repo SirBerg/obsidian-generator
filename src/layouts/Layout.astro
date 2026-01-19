@@ -1,6 +1,7 @@
 ---
 import Preview from "../components/Preview.astro";
 import Sidebar from "../components/Sidebar.astro";
+import '../../public/styles.css'
 ---
 <!doctype html>
 <html lang="en">
@@ -10,7 +11,6 @@ import Sidebar from "../components/Sidebar.astro";
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="generator" content={Astro.generator} />
 		<title>Astro Basics</title>
-        <link rel="stylesheet" href="/styles.css" />
         <script>
             // Add mouse hover preview for links
             document.addEventListener('DOMContentLoaded', () => {
@@ -51,6 +51,17 @@ import Sidebar from "../components/Sidebar.astro";
         <Sidebar />
         <main>
             <slot />
+            <div class="connected-notes">
+                <h3>Connected Notes</h3>
+                <div class="connected-notes-list">
+                    <div class="connected-note">
+                        Note 1
+                    </div>
+                    <div class="connected-note">
+                        Note 2
+                    </div>
+                </div>
+            </div>
             <iframe id="preview-frame" class="preview" />
         </main>
 	</body>

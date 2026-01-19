@@ -1,5 +1,6 @@
 ---
 // This sidebar shows each directory and its files as links. They are colapsible.
+import '../../public/styles.css'
 import directory_tree from "../pages/directory_tree.json";
 type DirectoryNode = {
     type: "file" | "directory",
@@ -7,6 +8,7 @@ type DirectoryNode = {
     children?: {[key:string]: DirectoryNode}
 }
 const directory_tree_root: {[key:string]: DirectoryNode} = directory_tree;
+let amountOfFiles = 0;
 function renderTree(node: {[key:string]: DirectoryNode}, path: string = "") {
     return `
         <ul>
@@ -22,6 +24,7 @@ function renderTree(node: {[key:string]: DirectoryNode}, path: string = "") {
                 `;
             } else if(value.type === "file") {
                 const filePath = path + "/" + key;
+                amountOfFiles++;
                 return `
                     <li class="file">
                         <a href="${filePath.replace(".md", "")}">${key.replace(".md","")}</a>
@@ -33,10 +36,28 @@ function renderTree(node: {[key:string]: DirectoryNode}, path: string = "") {
         </ul>
     `
 }
+renderTree(directory_tree_root)
 ---
 
 <aside class="sidebar left" id="sidebar">
-    <h2>Content</h2>
-    <nav set:html={renderTree(directory_tree_root)}>
-    </nav>
+    <div class="sidebar-header sidebar-element">
+        <h2>Digital Garden</h2>
+        <input class="search" placeholder="Search notes..." />
+    </div>
+    <div class="directory-tree sidebar-element">
+        <h3>
+            Filestructure goes here
+        </h3>
+    </div>
+    <div class="sidebar-tags sidebar-element">
+        <h3>
+            Tags go here
+        </h3>
+    </div>
+    <div class="sidebar-footer">
+        <a href="https://github.com/SirBerg/obsidian-generator" target="_blank" rel="noopener noreferrer">
+            Solaris v0.1.0
+        </a>
+        &#x1F680; {amountOfFiles} notes
+    </div>
 </aside>
