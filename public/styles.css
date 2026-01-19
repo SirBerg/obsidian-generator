@@ -1,3 +1,4 @@
+@import 'tailwindcss';
 @font-face{
     font-family: "IBM Plex Sans";
     src: url("/fonts/IBMPlexSans.ttf") format("truetype");
@@ -18,6 +19,7 @@
     --popover: #242019;
     --popover-foreground: #f5e6d3;
     --primary: #d4a574;
+    --text-primary-90: rgb(212, 165, 116, 0.9);
     --primary-foreground: #1a1814;
     --secondary: #2d2922;
     --secondary-foreground: #f5e6d3;
@@ -103,45 +105,151 @@ body{
     color: var(--foreground);
     margin: 0;
     width: 100%;
-    height: auto;
     display: flex;
+    position: relative;
     flex-direction: row;
 }
 main{
     flex-grow: 1;
     padding-left: 20px;
     max-width: 720px;
+    max-height: 100vh;
+    position: relative;
+    top: 0;
+    padding-bottom: 20px;
+    margin-left: auto;
+    margin-right: auto;
 }
 a {
     color: var(--primary);
     text-decoration: none;
 }
-code{
+code:not(pre code){
     font-family: "IBM Plex Mono", monospace;
-    background-color: var(--muted);
-    color: var(--muted-foreground);
+    background-color: var(--secondary);
+    color: var(--primary);
+    border: 1px solid var(--border);
     padding: 2px 4px;
     border-radius: 4px;
+}
+
+table{
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    border: 1px solid var(--border);
+}
+th, td{
+    border: 1px solid var(--border);
+    padding: 8px;
+    text-align: left;
+}
+th{
+    background-color: var(--secondary);
+    color: var(--secondary-foreground);
+}
+tr:nth-child(even){
+    background-color: var(--muted);
+}
+pre{
+    background-color: var(--card) !important;
+    padding: 10px;
+    border-radius: var(--radius);
+    overflow-x: auto;
+}
+pre > code{
+    background-color: transparent !important;
+    padding: 0 !important;
+}
+em{
+    font-style: italic;
+}
+h1{
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+}
+h2{
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+h3{
+    font-size: 1.75rem;
+    margin-bottom: 0.5rem;
+}
+h4{
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+h5{
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+}
+h6{
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+h1,h2,h3,h4,h5,h6{
+    font-weight: bold;
+}
+h5,h6{
+    color: var(--muted-foreground)
+}
+/* Blockquotes */
+blockquote {
+    @apply border-l-4 border-primary/60 pl-4 py-2 my-6 bg-secondary/30 rounded-r-lg italic;
+}
+
+blockquote p {
+    @apply mb-2 last:mb-0 text-foreground/90;
+}
+
+blockquote blockquote {
+    @apply mt-4 border-l-primary/40 bg-secondary/50;
+}
+@media (max-width: 970px) {
+    .sidebar-container{
+        display: none;
+    }
+}
+.sidebar-container{
+    position: relative;
+    height: 100%;
+    width: 250px;
+    z-index: 10;
 }
 .sidebar{
     width: 250px;
     background-color: var(--sidebar);
     color: var(--sidebar-foreground);
     border-right: 1px solid var(--sidebar-border);
-    height: 100vh;
+    min-height: 100vh;
     display: flex;
     flex-direction: column;
     align-items: center;
+    /*
+    Fix the sidebar so that it stays in place when scrolling
+    */
+    position: fixed;
+    top: 0;
 }
-
-.search{
-    background-color: var(--input);
+hr{
     border: none;
-    color: var(--foreground);
+    border-top: 1px solid var(--border);
+    width: 100%;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+sub{
+    font-size: 0.8rem;
+    vertical-align: baseline;
+}
+.search{
+    background-color: var(--secondary);
+    color: var(--muted-foreground);
     padding: 8px;
+    border: 1px solid var(--border);
     border-radius: var(--radius);
-    height: 20px;
-    font-weight: bold;
     font-family: "IBM Plex Mono", monospace;
 }
 .sidebar-element{
@@ -183,4 +291,26 @@ code{
     background-color: var(--secondary);
     padding: 10px;
     border-radius: var(--radius);
+}
+.tag{
+    background-color: var(--primary);
+    color: var(--accent-foreground);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-family: "IBM Plex Mono", monospace;
+    display: inline-block;
+    line-height: 1rem;
+}
+.tag-1{
+    background-color: var(--primary);
+}
+.tag-2{
+    background-color: var(--accent);
+}
+.tag-3{
+    background-color: var(--destructive);
+}
+.tag-4{
+    background-color: var(--chart-3);
 }
