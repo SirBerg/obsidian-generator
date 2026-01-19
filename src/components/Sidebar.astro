@@ -1,0 +1,42 @@
+---
+// This sidebar shows each directory and its files as links. They are colapsible.
+import directory_tree from "../pages/directory_tree.json";
+type DirectoryNode = {
+    type: "file" | "directory",
+    name?: string,
+    children?: {[key:string]: DirectoryNode}
+}
+const directory_tree_root: {[key:string]: DirectoryNode} = directory_tree;
+function renderTree(node: {[key:string]: DirectoryNode}, path: string = "") {
+    return `
+        <ul>
+        ${Object.entries(node).map(([key, value]) => {
+            if(value.type === "directory" && value.children) {
+                return `
+                    <li class="directory">
+                        <details>
+                            <summary>${key}</summary>
+                            ${renderTree(value.children, path + "/" + key)}
+                        </details>
+                    </li>
+                `;
+            } else if(value.type === "file") {
+                const filePath = path + "/" + key;
+                return `
+                    <li class="file">
+                        <a href="${filePath.replace(".md", "")}">${key.replace(".md","")}</a>
+                    </li>
+                `;
+            }
+            return '';
+        }).join('')}
+        </ul>
+    `
+}
+---
+
+<aside class="sidebar left" id="sidebar">
+    <h2>Content</h2>
+    <nav set:html={renderTree(directory_tree_root)}>
+    </nav>
+</aside>

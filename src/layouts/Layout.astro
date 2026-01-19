@@ -1,5 +1,6 @@
 ---
 import Preview from "../components/Preview.astro";
+import Sidebar from "../components/Sidebar.astro";
 ---
 <!doctype html>
 <html lang="en">
@@ -32,13 +33,22 @@ import Preview from "../components/Preview.astro";
                     });
                     link.addEventListener('mouseout', () => {
                         link.style.color = '';
-                        iframe.style.display = 'none';
+                        // Check if the mouse is over the iframe and if so, do not hide it
+                        setTimeout(()=>{
+                            if(!iframe.matches(':hover')){
+                                iframe.style.display = 'none';
+                            }
+                        }, 100);
                     });
+                })
+                iframe.addEventListener('mouseout', ()=>{
+                    iframe.style.display = 'none';
                 })
             });
         </script>
 	</head>
 	<body>
+        <Sidebar />
         <main>
             <slot />
             <iframe id="preview-frame" class="preview" />

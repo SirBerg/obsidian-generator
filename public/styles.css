@@ -8,19 +8,47 @@ body {
     height: 100%;
     background-color: var(--background-color);
     display: flex;
-    flex-direction: column;
     align-items: center;
+    flex-direction: row;
 }
 main{
     margin-top: 8vh;
     color: var(--text-color);
     max-width: 720px;
+    margin-left: auto;
+    margin-right: auto;
     font-family: Vercetti, sans-serif;
     display: flex;
     flex-direction: column;
 }
 main * {
     margin: 5px;
+}
+.sidebar{
+    position: fixed;
+    width: 200px;
+    height: 100%;
+    background-color: var(--secondary-color-muted);
+    color: var(--text-color);
+    padding: 16px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+}
+.sidebar ul{
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.sidebar a{
+    color: var(--text-color);
+    text-decoration: none;
+    margin: 8px 0;
+}
+.left{
+    top: 0;
+    left: 0;
 }
 h1{
     color: var(--text-color);
@@ -145,5 +173,13 @@ blockquote{
     margin: 8px 0;
     background-color: var(--secondary-color-muted);
     display: none;
-    min-width: 500px;
+    width: 500px;
+    resize: both;
+    overflow: auto;
+}
+
+.directory{
+    margin-top: 16px;
+    border-radius: 8px;
+    padding: 8px;
 }
