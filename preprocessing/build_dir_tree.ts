@@ -30,6 +30,12 @@ export class DirNode{
     public getParent(){
         return this.parent;
     }
+    public getName(){
+        return this.name;
+    }
+    public getType(){
+        return this.type;
+    }
     public getRoot():DirNode{
         let current_node:DirNode = this;
         while(current_node.parent != null){

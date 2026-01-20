@@ -53,12 +53,58 @@ const rules:Array<rule> = [
                     // Absolute path from vault root
                     try{
                         resolved_path = directory_tree_node.resolveAbsolutePath(link_target);
+                        console.log(resolved_path);
                     }
                     catch(e){
                         console.log("Did not find link target absolute path:", link_target);
                     }
                 }
-                return "";
+                else{
+                    // Means this is a relative path
+                    try{
+                        resolved_path = directory_tree_node.resolveAbsolutePath(link_target);
+                    }
+                    catch(e){
+                        console.log("Did not find link target relative path:", link_target);
+                    }
+                }
+
+                // If, at this point we do not have a resolved_path then we need to search the directory above us and all directories below to find a match
+                if(!resolved_path) {
+                    // First, try the directory above us
+                    let current_directory = directory_tree_node.getParent();
+                    // If current_directory is empty we were the root node which should not have happened
+                    if(!current_directory) throw new Error("Rules were applied to the root node. However this happened, it's wrong and should not be attempted")
+                    // If we do not have a parent directory then we were a file in the root dir
+                    if(current_directory.getParent() != null){
+                        current_directory = current_directory.getParent();
+                    }
+                    // Try to resolve the path
+                    try{
+                        resolved_path = current_directory?.resolveRelativePath(`./${link_target}`)
+                    }
+                    catch(e){
+                        console.log("Did not find link target relative path:", link_target);
+                    }
+
+                    // If we still do not have a resolved path, try all directories below us
+                    if(!resolved_path){
+                        const children = directory_tree_node.getParent()?.getChildren();
+                        if(!children) throw new Error("Could not find link target relative path")
+                        for(const child of children){
+                            if(child.getType() === "directory"){
+                                const names_fitting = child.getChildren().filter((child) => child.getName() == link_target);
+                                if(names_fitting.length > 0){
+                                    resolved_path = names_fitting[0];
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+                // If, after all this we still do not have a resolved path, then we have a broken link and will just return the link
+                if(!resolved_path) return `[${link_text}](/${link_target})`;
+                return `[${link_text}](/${resolved_path.getDirectory()}/${resolved_path.getName()})]`;
             });
         }
     },
