@@ -1,3 +1,5 @@
+import type {DirNode} from "./build_dir_tree.ts";
+
 export type file_details = {
     name: string;
     directory: string;
@@ -5,11 +7,11 @@ export type file_details = {
 export type rule = {
     name: string,
     description: string,
-    apply: (input: string, file_details:file_details) => string
+    apply: (input: string, file_details:file_details, directory_tree_node:DirNode) => string
 }
 export class SharedState {
     public static tag_class_map: Map<string, string> = new Map();
-    public static all_files: Map<string, file_details> = new Map();
+    public static dir_tree: DirNode| null = null;
     public static vault_path: string = "";
     public static graph_links_map: Map<string, Array<{target:string, exists:boolean}>>
     public static absolute_paths: Map<string, string> = new Map();
@@ -40,116 +42,23 @@ const rules:Array<rule> = [
     {
         name: "Replace all internal links",
         description: "Replaces all internal links identified by [[link|text]] with [text](/path) — outputs are vault-root-relative (vault path removed) and do not force .md extensions. Also records graph links into SharedState.graph_links_map and registers cleaned absolute links into SharedState.absolute_paths.",
-        apply: (input: string, file_details: file_details) => {
+        apply: (input: string, file_details: file_details, directory_tree_node:DirNode) => {
             return input.replace(/\[\[([^\|\]]+)(\|([^\]]+))?\]\]/g, (match, p1, p2, p3) => {
                 let link_target = p1.trim().replaceAll("\\", "/");
                 let link_text = p3 ? p3.trim() : link_target;
-
-                const stripExt = (n: string) => n.replace(/\.[^/.]+$/, "");
-                const hasExt = (p: string) => /\.[^\/]+$/.test(p);
-                const normalize = (p: string) => p.replace(/\/+/g, "/").replace(/\/$/g, "");
-                const joinPath = (...parts: string[]) =>
-                    parts.map(s => s.replace(/^\/+|\/+$/g, "")).filter(Boolean).join("/");
-
-                const toVaultRootPath = (pathParts: string[]) => {
-                    const p = normalize(joinPath(...pathParts));
-
-                    let target = (p ? `/${p}` : "/").replace(SharedState.vault_path, "");
-                    // remove the .md extension for markdown files
-                    if (target.endsWith(".md")) {
-                        target = target.slice(0, -3);
+                // Check the link target and determine if it is a relative path that we should resolve or just a file in the directory that we are in or that is directly above or below us
+                console.log(`Processing internal link: ${link_target} in file: ${file_details.directory}/${file_details.name}`);
+                let resolved_path:DirNode|null = null;
+                if(link_target.startsWith("/")){
+                    // Absolute path from vault root
+                    try{
+                        resolved_path = directory_tree_node.resolveAbsolutePath(link_target);
                     }
-                    return target;
-                };
-
-                // ensure graph map exists
-                if (!SharedState.graph_links_map) {
-                    SharedState.graph_links_map = new Map();
-                }
-
-                const sourcePath = toVaultRootPath([file_details.directory, file_details.name]);
-                const recordLink = (targetPath: string, exists: boolean) => {
-                    const arr = SharedState.graph_links_map.get(sourcePath) || [];
-                    arr.push({ target: targetPath, exists });
-                    SharedState.graph_links_map.set(sourcePath, arr);
-                };
-
-                // ensure absolute_paths map exists (class init already does, but be safe)
-                if (!SharedState.absolute_paths) {
-                    SharedState.absolute_paths = new Map();
-                }
-
-                const targetNameNoExt = stripExt(link_target);
-
-                // Case 1: exact file name in same directory
-                for (const [, fd] of SharedState.all_files) {
-                    if (fd.directory === file_details.directory && stripExt(fd.name) === targetNameNoExt) {
-                        const publicPath = toVaultRootPath([fd.directory, fd.name]);
-                        const finalPath = publicPath;
-                        recordLink(finalPath, true);
-                        SharedState.absolute_paths.set(link_target, finalPath);
-                        return `[${link_text}](${encodeURI(finalPath)})`;
+                    catch(e){
+                        console.log("Did not find link target absolute path:", link_target);
                     }
                 }
-
-                // Case 2: relative path (contains / or starts with ./ or ../)
-                if (link_target.includes("/") || link_target.startsWith("./") || link_target.startsWith("..")) {
-                    const resolved = normalize(joinPath(file_details.directory, link_target));
-
-                    // Try to find an exact file match in the vault (allow matching by name ignoring ext)
-                    for (const [, fd] of SharedState.all_files) {
-                        const candidate = normalize(joinPath(fd.directory, fd.name));
-                        if (candidate === resolved || stripExt(candidate) === stripExt(resolved)) {
-                            const publicPath = toVaultRootPath([fd.directory, fd.name]);
-                            const finalPath = publicPath;
-                            recordLink(finalPath, true);
-                            SharedState.absolute_paths.set(link_target, finalPath);
-                            return `[${link_text}](${encodeURI(finalPath)})`;
-                        }
-                    }
-
-                    // No exact match — return resolved path from vault root (preserve extension if provided in original)
-                    const publicPath = toVaultRootPath([resolved]);
-                    const finalPath = publicPath;
-                    recordLink(finalPath, false);
-                    SharedState.absolute_paths.set(link_target, finalPath);
-                    return `[${link_text}](${encodeURI(finalPath)})`;
-                }
-
-                // Case 3: absolute from vault root (starts with /)
-                if (link_target.startsWith("/")) {
-                    const cleaned = `/${normalize(link_target)}`.replace(/^\/+/, "/");
-                    // determine existence
-                    const exists = (() => {
-                        for (const [, fd] of SharedState.all_files) {
-                            if (toVaultRootPath([fd.directory, fd.name]) === cleaned) return true;
-                        }
-                        return false;
-                    })();
-                    const finalPath = cleaned;
-                    recordLink(finalPath, exists);
-                    SharedState.absolute_paths.set(link_target, finalPath);
-                    return `[${link_text}](${encodeURI(finalPath)})`;
-                }
-
-                // Case 4: no known file — try to find by name anywhere in the vault
-                for (const [, fd] of SharedState.all_files) {
-                    if (stripExt(fd.name) === targetNameNoExt) {
-                        const publicPath = toVaultRootPath([fd.directory, fd.name]);
-                        const outPath = publicPath.endsWith(".md") ? publicPath.slice(0, -3) : publicPath;
-                        const finalPath = outPath;
-                        recordLink(publicPath, true);
-                        SharedState.absolute_paths.set(link_target, finalPath);
-                        return `[${link_text}](${encodeURI(finalPath)})`;
-                    }
-                }
-
-                // Fallback: treat as vault-root relative, preserve provided extension if any
-                const fallbackPath = toVaultRootPath([link_target]);
-                const finalPath = fallbackPath;
-                recordLink(finalPath, false);
-                SharedState.absolute_paths.set(link_target, finalPath);
-                return `<a href="${encodeURI(finalPath)}" aria-disabled="true">${link_text}</a>`;
+                return "";
             });
         }
     },

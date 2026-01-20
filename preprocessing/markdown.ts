@@ -1,28 +1,36 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import rules, {SharedState} from "./markdown_rules.ts";
-import {w} from "magicast/dist/types-CQa2aD_O";
-const VAULT_PATH = "/home/berg/Documents/Schule";
+import {buildDirTree} from "./build_dir_tree.ts";
+
+const VAULT_PATH = "/Users/boerg/Documents/Main";
 
 /*
 * Applies all rules defined in markdown_rules to the markdown file at filePath.
 * */
 export function applyMarkdownPreprocessingRules(filePath:string, dirPath:string){
+    console.log("Reading file content")
     const fileContent = fs.readFileSync(filePath, "utf-8");
+    console.log("File content read");
     const fileStats = fs.statSync(filePath);
+    if(!fileStats.isFile()) throw new Error("File is not a file.");
     const file_details = {
         name: path.basename(filePath),
         directory: path.dirname(filePath)
     }
     let out_string = fileContent;
+    if(!SharedState.dir_tree) throw new Error("Directory tree not built yet. Did you forget to call generate()?");
+    let directory_node = SharedState.dir_tree?.resolveAbsolutePath(filePath.replace(VAULT_PATH, ""));
     for(const rule of rules){
         console.log(`Applying rule: ${rule.name}\nDescription: ${rule.description}`);
-        out_string = rule.apply(out_string, file_details);
+        out_string = rule.apply(out_string, file_details, directory_node);
     }
     // Write the processed content back to the file as a .mdx
     const path_without_vault = filePath.replace(VAULT_PATH, "");
     const output_path = path.join(".","src", "pages", path_without_vault);
     const dir_path = path.join(".","src", "pages", dirPath.replace(VAULT_PATH, ""));
+
+
     console.log("will write to:", output_path, dir_path);
 
     try{
@@ -44,17 +52,6 @@ export function applyMarkdownPreprocessingRules(filePath:string, dirPath:string)
     }
 }
 
-class MarkdownGraph{
-    public static links_map: Map<string, Set<string>> = new Map();
-}
-/*
-* Extracts and normalizes links and tags from the markdown file content and stores those relationships in a map
-* */
-export function buildMarkdownGraph(fileContent:string){
-
-}
-//applyMarkdownPreprocessingRules("test")
-
 /*
 * Runs the markdown preprocessing for each file defined at VAULT_PATH
 * */
@@ -65,7 +62,6 @@ function processVault(vaultPath:string){
         if(file.startsWith(".")) continue;
         // Check if the file is a markdown file OR a directory
         const fullPath = path.join(vaultPath, file);
-        console.log(file, fullPath)
         const stat = fs.statSync(fullPath);
         if(stat.isFile() && path.extname(file) === ".md"){
             console.log(`Processing file: ${fullPath}`);
@@ -111,39 +107,12 @@ function scanDirectoryForFiles(dirPath:string){
 
 function generate(){
     SharedState.vault_path = VAULT_PATH;
-    // First, build a map of all files in the vault
-    scanDirectoryForFiles(VAULT_PATH)
-
+    // Firstly, build a directory tree of all files in the vault
+    SharedState.dir_tree = buildDirTree(VAULT_PATH, null, VAULT_PATH);
     // Then process those files and apply the rules in markdown_rules
     processVault(VAULT_PATH);
 
-    // Generate a directory_tree.json file representing the vault structure in src/pages out of the SharedState.all_files map
-    type DirectoryNode = {
-        type: "file" | "directory",
-        name?: string,
-        children?: {[key:string]: DirectoryNode}
-    }
-    const directory_tree: {[key:string]: DirectoryNode} = {};
-    for(const [filePath, fileDetails] of SharedState.all_files){
-        const relativePath = filePath.replace(VAULT_PATH, "");
-        const parts = relativePath.split(path.sep).filter(part => part.length > 0);
-        let currentLevel = directory_tree;
-        for(let i = 0; i < parts.length; i++){
-            const part = parts[i];
-            if(i === parts.length - 1){
-                // It's a file
-                currentLevel[part] = { type: "file", name: fileDetails.name };
-            } else{
-                // It's a directory
-                if(!currentLevel[part]){
-                    currentLevel[part] = { type: "directory", children: {} };
-                }
-                currentLevel = currentLevel[part].children;
-            }
-        }
-    }
-    console.log("Directory tree:", JSON.stringify(directory_tree, null, 2));
     const output_path = path.join(".","src", "pages", "directory_tree.json");
-    fs.writeFileSync(output_path, JSON.stringify(directory_tree, null, 2), "utf-8");
+    fs.writeFileSync(output_path, JSON.stringify(SharedState.dir_tree.toJson(), null, 2), "utf-8");
 }
 generate();
