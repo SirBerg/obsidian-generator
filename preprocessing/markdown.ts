@@ -2,6 +2,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import rules, {SharedState} from "./markdown_rules.ts";
 import {buildDirTree} from "./build_dir_tree.ts";
+import {buildTagPage} from "./build_tags_page.ts";
 
 const VAULT_PATH = "/Users/boerg/Documents/Main";
 
@@ -111,7 +112,8 @@ function generate(){
     SharedState.dir_tree = buildDirTree(VAULT_PATH, null, VAULT_PATH);
     // Then process those files and apply the rules in markdown_rules
     processVault(VAULT_PATH);
-
+    //applyMarkdownPreprocessingRules("/Users/boerg/Documents/Main/Technikerschule/Technikerschule Links & Intro.md", "/Users/boerg/Documents/Main/Technikerschule");
+    //buildTagPage();
     const output_path = path.join(".","src", "pages", "directory_tree.json");
     fs.writeFileSync(output_path, JSON.stringify(SharedState.dir_tree.toJson(), null, 2), "utf-8");
 }

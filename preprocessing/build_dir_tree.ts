@@ -36,6 +36,24 @@ export class DirNode{
     public getType(){
         return this.type;
     }
+    public findFileInVault(name:string):Array<DirNode>{
+        const root_node = this.getRoot();
+        function recurse(node:DirNode):Array<DirNode>{
+            // Remove the trailing .ttt fileextensions
+            const name_without_extension = node.name.replace(/\.[^/.]+$/, "");
+            if(node.type === "file" && name === name_without_extension) return [node];
+            if(node.type === "file" && name === node.name) return [node];
+            let return_array:Array<DirNode> = [];
+            for(const child of node.getChildren()){
+                const found_files = recurse(child);
+                if(found_files.length > 0){
+                    return_array.push(...found_files);
+                }
+            }
+            return return_array;
+        }
+        return recurse(root_node) ?? [];
+    }
     public getRoot():DirNode{
         let current_node:DirNode = this;
         while(current_node.parent != null){
@@ -67,7 +85,6 @@ export class DirNode{
     * It can traverse upwards and downwards.
     * */
     public resolveRelativePath(rel_path:string):DirNode{
-        console.log("Resolving relative path:", rel_path);
         if(rel_path.startsWith("/")) return this.resolveAbsolutePath(rel_path);
         if(rel_path.startsWith("./")) return this.resolveRelativePath(rel_path.replace("./", ""));
         if(!rel_path.startsWith("/") && !rel_path.startsWith("../") && !rel_path.startsWith("./")) return this.resolveAbsolutePath(`/${rel_path}`);
@@ -96,9 +113,7 @@ export class DirNode{
                 children: []
             }
             for(const child of DirNode.getChildren()){
-                console.log("Processing child:", child.name, "of type:", child.type);
                 if(child.type === "directory"){
-                    console.log("Recursing into directory:", child.name);
                     if(return_object.children == null) return_object.children = [];
                     return_object.children.push(recurse(child));
                 }
@@ -154,3 +169,9 @@ export function buildDirTree(dir:string, root:DirNode | null = null, vault_path:
     dir_return_node.addChildren(...children);
     return dir_return_node;
 }
+
+/*
+const test_tree = buildDirTree("/Users/boerg/Documents/Main", null, "/Users/boerg/Documents/Main");
+let wpug_node = test_tree.findFileInVault("Programmierung");
+console.log(wpug_node[0].getDirectory())
+ */

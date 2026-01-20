@@ -1,4 +1,6 @@
 import type {DirNode} from "./build_dir_tree.ts";
+import {processTag} from "./build_tags_page.ts";
+import path from "node:path";
 
 export type file_details = {
     name: string;
@@ -44,74 +46,57 @@ const rules:Array<rule> = [
         description: "Replaces all internal links identified by [[link|text]] with [text](/path) — outputs are vault-root-relative (vault path removed) and do not force .md extensions. Also records graph links into SharedState.graph_links_map and registers cleaned absolute links into SharedState.absolute_paths.",
         apply: (input: string, file_details: file_details, directory_tree_node:DirNode) => {
             return input.replace(/\[\[([^\|\]]+)(\|([^\]]+))?\]\]/g, (match, p1, p2, p3) => {
-                let link_target = p1.trim().replaceAll("\\", "/");
+                let link_target = p1.trim();
+                // Remove trailing \ from the link_target
+                link_target = link_target.replace(/\\$/, "");
                 let link_text = p3 ? p3.trim() : link_target;
-                // Check the link target and determine if it is a relative path that we should resolve or just a file in the directory that we are in or that is directly above or below us
-                console.log(`Processing internal link: ${link_target} in file: ${file_details.directory}/${file_details.name}`);
-                let resolved_path:DirNode|null = null;
-                if(link_target.startsWith("/")){
-                    // Absolute path from vault root
+                let resolved_path:null | DirNode = null;
+                if(link_target.startsWith("/") || link_target.startsWith("./")){
                     try{
-                        resolved_path = directory_tree_node.resolveAbsolutePath(link_target);
-                        console.log(resolved_path);
+                        if(!directory_tree_node.getParent()) throw new Error("Could not resolve path, directory tree node has no parent.");
+                        resolved_path = directory_tree_node.getParent().resolveRelativePath(link_target);
                     }
                     catch(e){
-                        console.log("Did not find link target absolute path:", link_target);
-                    }
-                }
-                else{
-                    // Means this is a relative path
-                    try{
-                        resolved_path = directory_tree_node.resolveAbsolutePath(link_target);
-                    }
-                    catch(e){
-                        console.log("Did not find link target relative path:", link_target);
+                        console.log("Could not resolve path, falling back to vault search")
                     }
                 }
 
-                // If, at this point we do not have a resolved_path then we need to search the directory above us and all directories below to find a match
-                if(!resolved_path) {
-                    // First, try the directory above us
-                    let current_directory = directory_tree_node.getParent();
-                    // If current_directory is empty we were the root node which should not have happened
-                    if(!current_directory) throw new Error("Rules were applied to the root node. However this happened, it's wrong and should not be attempted")
-                    // If we do not have a parent directory then we were a file in the root dir
-                    if(current_directory.getParent() != null){
-                        current_directory = current_directory.getParent();
+                // Search the vault for the file
+                if(!resolved_path){
+                    let filename_in_link_target = path.basename(link_target);
+                    let found_nodes = directory_tree_node.findFileInVault(filename_in_link_target);
+                    if(found_nodes.length == 0){
+                        found_nodes = directory_tree_node.findFileInVault(`${link_target.replaceAll("\\", "")}`);
                     }
-                    // Try to resolve the path
-                    try{
-                        resolved_path = current_directory?.resolveRelativePath(`./${link_target}`)
+                    console.log(`Found ${found_nodes.length} results for ${filename_in_link_target}, ${link_target} in vault`);
+                    // If there are more than 1 results, we should use the one "closer" to the current file
+                    if(found_nodes.length > 1){
+                        resolved_path = found_nodes.reduce((closest, node) => {
+                            return Math.abs(node.getDirectory().length - file_details.directory.length) < Math.abs(closest.getDirectory().length - file_details.directory.length) ? node : closest;
+                        });
                     }
-                    catch(e){
-                        console.log("Did not find link target relative path:", link_target);
+                    else if(found_nodes.length === 1){
+                        resolved_path = found_nodes[0];
                     }
-
-                    // If we still do not have a resolved path, try all directories below us
-                    if(!resolved_path){
-                        const children = directory_tree_node.getParent()?.getChildren();
-                        if(!children) throw new Error("Could not find link target relative path")
-                        for(const child of children){
-                            if(child.getType() === "directory"){
-                                const names_fitting = child.getChildren().filter((child) => child.getName() == link_target);
-                                if(names_fitting.length > 0){
-                                    resolved_path = names_fitting[0];
-                                    break;
-                                }
-                            }
-                        }
+                    else{
+                        console.log(`Could not find file with name: ${filename_in_link_target} in vault`);
                     }
                 }
-                // If, after all this we still do not have a resolved path, then we have a broken link and will just return the link
-                if(!resolved_path) return `[${link_text}](/${link_target})`;
-                return `[${link_text}](/${resolved_path.getDirectory()}/${resolved_path.getName()})]`;
+                if(!resolved_path) return `[${link_text}](${encodeURI(link_target)}) broken link!`;
+                // Set link_target to the name of the file without extension
+                link_target = resolved_path.getName()
+                if(link_target.endsWith(".md")){
+                    link_target = path.basename(link_target, path.extname(link_target));
+                }
+                console.log(link_target)
+                return `[${link_text}](${encodeURI(`${resolved_path.getDirectory()}/${link_target}`)})`;
             });
         }
     },
     {
         name: "Convert Tags",
         description: "Converts all tags identified by #tag to <div class=\"tag\">#tag</div>.",
-        apply: (input:string, file_details:file_details)=>{
+        apply: (input:string, file_details:file_details, directory_tree_node: DirNode)=>{
             return input.replace(/#(\w+)/g, (match, p1) => {
                 // Check if we have already assigned a class to this tag
                 let assigned_class = null;
@@ -124,6 +109,7 @@ const rules:Array<rule> = [
                     assigned_class = `${num}`;
                     SharedState.tag_class_map.set(p1, assigned_class);
                 }
+                processTag(p1, directory_tree_node);
                 return `<div class="tag tag-${assigned_class}">#${p1}</div>`;
             })
         }
