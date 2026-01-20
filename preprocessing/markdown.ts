@@ -27,7 +27,7 @@ export function applyMarkdownPreprocessingRules(filePath:string, dirPath:string)
         out_string = rule.apply(out_string, file_details, directory_node);
     }
     // Write the processed content back to the file as a .mdx
-    const path_without_vault = filePath.replace(VAULT_PATH, "");
+    const path_without_vault = filePath.replaceAll("\\", "/").replace(VAULT_PATH, "");
     const output_path = path.join(".","src", "pages", path_without_vault);
     const dir_path = path.join(".","src", "pages", dirPath.replace(VAULT_PATH, ""));
 
@@ -73,7 +73,7 @@ function processVault(vaultPath:string){
         }
         else if(stat.isFile() && path.extname(file) !== ".md"){
             // Everything else is copied as is
-            const path_without_vault = fullPath.replace(VAULT_PATH, "");
+            const path_without_vault = fullPath.replaceAll("\\", "/").replace(VAULT_PATH, "");
             const output_path = path.join(".","public", "", path_without_vault);
             const dir_path = path.dirname(output_path);
             try{
