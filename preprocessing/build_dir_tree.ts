@@ -1,6 +1,6 @@
 import * as fs from "node:fs";
 import path from "node:path";
-type json_dir_tree = {
+export type json_dir_tree = {
     name: string,
     directory: string,
     type: "file" | "directory",

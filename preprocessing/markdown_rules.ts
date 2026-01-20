@@ -1,6 +1,7 @@
-import type {DirNode} from "./build_dir_tree.ts";
+import type {DirNode, json_dir_tree} from "./build_dir_tree.ts";
 import {processTag} from "./build_tags_page.ts";
 import path from "node:path";
+import type {Dir} from "node:fs";
 
 export type file_details = {
     name: string;
@@ -17,17 +18,21 @@ export class SharedState {
     public static vault_path: string = "";
     public static graph_links_map: Map<string, Array<{target:string, exists:boolean}>>
     public static absolute_paths: Map<string, string> = new Map();
+    public static link_map: {[key:string]:Array<{
+            node: DirNode,
+            type: "outgoing" | "incoming"
+        }>} = {};
 }
 const rules:Array<rule> = [
     {
         name: "Add Layout",
         description: "Adds the layout frontmatter to the markdown file.",
-        apply: (input:string, file_details:file_details)=>{
+        apply: (input:string, file_details:file_details, directory_tree_node:DirNode)=>{
             // This means there is already frontmatter present, we don't want to change that too much, however we do want to ensure the layout is set
             if(input.startsWith("---")){
-                return input.replace("---", `---\nlayout: ./src/layouts/Layout.astro \n`);
+                return input.replace("---", `---\nlayout: ./src/layouts/Layout.astro\noriginal_file_path: ${directory_tree_node.getDirectory()}/${directory_tree_node.getName()}\n`);
             }
-            return `---\nlayout: ./src/layouts/Layout.astro \n---\n\n${input}`;
+            return `---\nlayout: ./src/layouts/Layout.astro\noriginal_file_path: ${directory_tree_node.getDirectory()}/${directory_tree_node.getName()}\n---\n\n${input}`;
         }
     },
     {
@@ -88,7 +93,23 @@ const rules:Array<rule> = [
                 if(link_target.endsWith(".md")){
                     link_target = path.basename(link_target, path.extname(link_target));
                 }
-                console.log(link_target)
+                if(!SharedState.link_map[directory_tree_node.getDirectory() + "/" + directory_tree_node.getName()]){
+                    SharedState.link_map[directory_tree_node.getDirectory() + "/" + directory_tree_node.getName()] = []
+                }
+                if(resolved_path.getName().endsWith(".md")){
+                    SharedState.link_map[directory_tree_node.getDirectory() + "/" + directory_tree_node.getName()].push({
+                        node: resolved_path,
+                        type: "outgoing"
+                    });
+                    // Add this file as incoming link to the resolved_path
+                    if(!SharedState.link_map[resolved_path.getDirectory() + "/" + resolved_path.getName()]){
+                        SharedState.link_map[resolved_path.getDirectory() + "/" + resolved_path.getName()] = []
+                    }
+                    SharedState.link_map[resolved_path.getDirectory() + "/" + resolved_path.getName()].push({
+                        node: directory_tree_node,
+                        type: "incoming"
+                    })
+                }
                 return `[${link_text}](${encodeURI(`${resolved_path.getDirectory()}/${link_target}`)})`;
             });
         }
