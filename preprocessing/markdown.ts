@@ -4,7 +4,7 @@ import rules, {SharedState} from "./markdown_rules.ts";
 import {buildDirTree} from "./build_dir_tree.ts";
 import {buildTagPage} from "./build_tags_page.ts";
 
-const VAULT_PATH = "/Users/boerg/Documents/Main";
+const VAULT_PATH = "/home/berg/Documents/Schule";
 //const VAULT_PATH = "./vault";
 
 /*
@@ -30,7 +30,7 @@ export function applyMarkdownPreprocessingRules(filePath:string, dirPath:string)
     // Write the processed content back to the file as a .mdx
     const path_without_vault = filePath.replaceAll("\\", "/").replace(VAULT_PATH, "");
     const output_path = path.join(".","src", "pages", path_without_vault);
-    const dir_path = path.join(".","src", "pages", dirPath.replace(VAULT_PATH, ""));
+    const dir_path = path.join(".","src", "pages", dirPath.replaceAll("\\", "/").replace(VAULT_PATH, ""));
 
 
     console.log("will write to:", output_path, dir_path);
@@ -89,23 +89,6 @@ function processVault(vaultPath:string){
         }
     }
 }
-function scanDirectoryForFiles(dirPath:string){
-    const files = fs.readdirSync(dirPath);
-
-    for(const file of files){
-        if(file.startsWith(".")) continue;
-        const fullPath = path.join(dirPath, file);
-        const stat = fs.statSync(fullPath);
-        if(stat.isFile()){
-            // Store the file details in the SharedState
-            SharedState.all_files.set(fullPath, { name: file, directory: dirPath.replace(VAULT_PATH, "") });
-        } else if(stat.isDirectory()){
-            // Recursively scan the directory
-            scanDirectoryForFiles(fullPath);
-        }
-    }
-}
-
 
 function generate(){
     SharedState.vault_path = VAULT_PATH;
