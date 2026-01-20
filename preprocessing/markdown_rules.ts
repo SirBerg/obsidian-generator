@@ -96,22 +96,66 @@ const rules:Array<rule> = [
     {
         name: "Convert Tags",
         description: "Converts all tags identified by #tag to <div class=\"tag\">#tag</div>.",
-        apply: (input:string, file_details:file_details, directory_tree_node: DirNode)=>{
-            return input.replace(/#(\w+)/g, (match, p1) => {
-                // Check if we have already assigned a class to this tag
-                let assigned_class = null;
-                if(SharedState.tag_class_map.has(p1)){
-                    assigned_class = SharedState.tag_class_map.get(p1);
+        apply: (input: string, file_details: file_details, node: DirNode) => {
+
+            const placeholders: string[] = [];
+
+            // 1. Alles maskieren, was KEINE Tags enthalten darf
+            let masked = input.replace(
+                /```[\s\S]*?```|`[^`]*`|\[\[[\s\S]*?\]\]|\[[^\]]*?\]\([^)]+\)/g,
+                match => {
+                    const id = placeholders.length;
+                    placeholders.push(match);
+                    return `@@MASK_${id}@@`;
                 }
-                else{
-                    // Generate a random number between 1 and 4 for color assignment
+            );
+
+            // 2. Jetzt NUR noch echte Tags ersetzen
+            masked = masked.replace(/(?<!\w)#([a-zA-Z0-9_]+)/g, (match, tag) => {
+
+                let assigned_class: string;
+
+                if (SharedState.tag_class_map.has(tag)) {
+                    assigned_class = SharedState.tag_class_map.get(tag)!;
+                } else {
                     const num = Math.floor(Math.random() * 4) + 1;
                     assigned_class = `${num}`;
-                    SharedState.tag_class_map.set(p1, assigned_class);
+                    SharedState.tag_class_map.set(tag, assigned_class);
                 }
-                processTag(p1, directory_tree_node);
-                return `<div class="tag tag-${assigned_class}">#${p1}</div>`;
-            })
+
+                processTag(tag, node);
+
+                return `<div class='tag tag-${assigned_class}'>#${tag}</div>`;
+            });
+
+            // 3. Maskierten Inhalt wieder einsetzen
+            return masked.replace(/@@MASK_(\d+)@@/g, (_, i) => placeholders[Number(i)]);
+        }
+    },
+    {
+        name: "Numbered List",
+        description: "ToDo",
+        apply: (input: string, file_details: file_details) => {
+            //ToDo
+            return input;
+        }
+    },
+    {
+        name: "Excalidraw",
+        description: "ToDo",
+        apply: (input: string, file_details: file_details) => {
+            //Maybe replace .excalidraw with .excalidraw.svg
+            return input;
+        }
+    },
+    {
+        name: "Show the File Properties",
+        description: "Shows the frontmatter Properties as Table",
+        apply: (input: string, file_details: file_details) => {
+            if (input.startsWith("---")) {
+                //ToDo
+            }
+            return input;
         }
     },
     {

@@ -5,6 +5,7 @@ import {buildDirTree} from "./build_dir_tree.ts";
 import {buildTagPage} from "./build_tags_page.ts";
 
 const VAULT_PATH = "/Users/boerg/Documents/Main";
+//const VAULT_PATH = "./vault";
 
 /*
 * Applies all rules defined in markdown_rules to the markdown file at filePath.
@@ -113,7 +114,7 @@ function generate(){
     // Then process those files and apply the rules in markdown_rules
     processVault(VAULT_PATH);
     //applyMarkdownPreprocessingRules("/Users/boerg/Documents/Main/Technikerschule/Technikerschule Links & Intro.md", "/Users/boerg/Documents/Main/Technikerschule");
-    //buildTagPage();
+    buildTagPage();
     const output_path = path.join(".","src", "pages", "directory_tree.json");
     fs.writeFileSync(output_path, JSON.stringify(SharedState.dir_tree.toJson(), null, 2), "utf-8");
 }
