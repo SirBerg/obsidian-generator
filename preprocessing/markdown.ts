@@ -6,7 +6,7 @@ import {buildTagPage} from "./build_tags_page.ts";
 import {link_rules} from "./link_rules.ts";
 
 //const VAULT_PATH = "/home/berg/Documents/Schule";
-const VAULT_PATH = "./vault";
+const VAULT_PATH = "vault";
 
 /*
 * Applies all rules defined in markdown_rules to the markdown file at filePath.
@@ -14,6 +14,7 @@ const VAULT_PATH = "./vault";
 export function applyMarkdownPreprocessingRules(filePath:string, dirPath:string, ruleset:Array<rule>){
     console.log("Reading file content")
     const fileContent = fs.readFileSync(filePath, "utf-8");
+    filePath = filePath.replaceAll("\\", "/");
     console.log("File content read");
     const fileStats = fs.statSync(filePath);
     if(!fileStats.isFile()) throw new Error("File is not a file.");
@@ -55,6 +56,7 @@ export function applyMarkdownPreprocessingRules(filePath:string, dirPath:string,
     }
     let dir_path = path.join(".","src", "pages", dirPath.replaceAll("\\", "/").replace(VAULT_PATH, ""));
     if(path_without_vault.startsWith("src/pages")){
+        output_path = output_path.replaceAll("\\", "/");
         output_path = output_path.replace("src/pages", "./");
     }
     console.log("will write to:", output_path, dir_path);
@@ -132,12 +134,12 @@ function generate(){
     //clean output directories or create if not exists
     if(fs.existsSync(path.join(".","src", "pages"))){
         fs.rmSync(path.join(".","src", "pages"), { recursive: true, force: true });
-    }else{
-        fs.mkdirSync(path.join(".","src", "pages"), { recursive: true });
     }
+    fs.mkdirSync(path.join(".","src", "pages"), { recursive: true });
     SharedState.vault_path = VAULT_PATH;
     // Firstly, build a directory tree of all files in the vault
     SharedState.dir_tree = buildDirTree(VAULT_PATH, null, VAULT_PATH);
+    console.log(SharedState.dir_tree.findFileInVault("test"))
     // Then process those files and apply the rules in markdown_rules
     processVault(VAULT_PATH);
     processLinks()
