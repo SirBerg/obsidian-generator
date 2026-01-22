@@ -4,6 +4,7 @@ import rules, {type rule, SharedState} from "./markdown_rules.ts";
 import {buildDirTree, DirNode} from "./build_dir_tree.ts";
 import {buildTagPage} from "./build_tags_page.ts";
 import {link_rules} from "./link_rules.ts";
+import { buildDirPage } from "./build_dir_page.ts";
 
 //const VAULT_PATH = "/home/berg/Documents/Schule";
 const VAULT_PATH = "vault";
@@ -142,6 +143,7 @@ function generate(){
     console.log(SharedState.dir_tree.findFileInVault("test"))
     // Then process those files and apply the rules in markdown_rules
     processVault(VAULT_PATH);
+    buildDirPage();
     processLinks()
     //applyMarkdownPreprocessingRules("/Users/boerg/Documents/Main/Technikerschule/Technikerschule Links & Intro.md", "/Users/boerg/Documents/Main/Technikerschule");
     buildTagPage();

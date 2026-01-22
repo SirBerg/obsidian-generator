@@ -277,7 +277,7 @@ sub{
     width: 100%;
 }
 .connected-notes{
-    margin-top: auto;
+    margin-top: 1rem;
     padding: 10px;
     background-color: var(--card);
     border-radius: var(--radius);
