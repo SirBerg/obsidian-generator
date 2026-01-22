@@ -5,8 +5,8 @@ import {buildDirTree, DirNode} from "./build_dir_tree.ts";
 import {buildTagPage} from "./build_tags_page.ts";
 import {link_rules} from "./link_rules.ts";
 
-const VAULT_PATH = "/home/berg/Documents/Schule";
-//const VAULT_PATH = "./vault";
+//const VAULT_PATH = "/home/berg/Documents/Schule";
+const VAULT_PATH = "./vault";
 
 /*
 * Applies all rules defined in markdown_rules to the markdown file at filePath.
@@ -129,6 +129,12 @@ function processLinks(path_in:string = path.join(".","src", "pages")){
     }
 }
 function generate(){
+    //clean output directories or create if not exists
+    if(fs.existsSync(path.join(".","src", "pages"))){
+        fs.rmSync(path.join(".","src", "pages"), { recursive: true, force: true });
+    }else{
+        fs.mkdirSync(path.join(".","src", "pages"), { recursive: true });
+    }
     SharedState.vault_path = VAULT_PATH;
     // Firstly, build a directory tree of all files in the vault
     SharedState.dir_tree = buildDirTree(VAULT_PATH, null, VAULT_PATH);
